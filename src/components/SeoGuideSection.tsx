@@ -24,7 +24,7 @@ export const SeoGuideSection: React.FC<SeoGuideSectionProps> = ({ onScrollToTop,
           </p>
 
           <p className="text-sm sm:text-base leading-relaxed mb-6">
-            Unlike other downloaders that compress video resolution or insert annoying logos, AnyDownloader fetches the authentic, high-bitrate media directly from official CDN nodes. Whether it’s an entertaining sketch, a culinary recipe, or a dramatic short series episode, our tool extracts the original audio and video streams without watermarks.
+            Unlike other downloaders that compress video resolution or insert annoying logos, KHS DOWNLOAD fetches the authentic, high-bitrate media directly from official CDN nodes. Whether it’s an entertaining sketch, a culinary recipe, or a dramatic short series episode, our tool extracts the original audio and video streams without watermarks.
           </p>
 
           {/* Compatibility Highlights */}
@@ -66,7 +66,7 @@ export const SeoGuideSection: React.FC<SeoGuideSectionProps> = ({ onScrollToTop,
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 text-center sm:text-left">
             <div>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-xs mb-3">
-                AnyDownloader.com
+                KHS DOWNLOAD
               </span>
               <h3 className="text-2xl sm:text-3xl font-black font-display tracking-tight">
                 Better save it before it’s gone.

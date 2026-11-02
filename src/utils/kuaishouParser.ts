@@ -146,7 +146,7 @@ export function buildVideoResult(params: {
   const durationFormatted = formatDuration(params.durationMs ?? 102066);
   // High quality sample cover and real preview
   const cover = params.coverUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80';
-  const videoStream = params.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+  const videoStream = params.videoUrl || 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
   return {
     id: params.id,

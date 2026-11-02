@@ -66,14 +66,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button 
               onClick={() => onNavigateTab('kuaishou')} 
               className="flex items-center gap-2 group text-left focus:outline-hidden"
-              aria-label="AnyDownloader Home"
+              aria-label="KHS DOWNLOAD Home"
             >
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
                 <Download className="w-4 h-4 sm:w-5 sm:h-5 text-white stroke-[2.5]" />
               </div>
               <div className="flex flex-col">
                 <span className="text-lg sm:text-2xl font-black tracking-tight font-display text-slate-900 dark:text-white flex items-center whitespace-nowrap">
-                  <span>Any</span><span className="text-blue-600 dark:text-blue-400">Downloader</span>
+                  <span>KHS</span>&nbsp;<span className="text-blue-600 dark:text-blue-400">DOWNLOAD</span>
                   <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
                     HD
                   </span>

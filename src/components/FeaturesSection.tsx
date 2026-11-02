@@ -47,7 +47,7 @@ export const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isDark }) => {
     },
     {
       title: 'High-Quality (Full HD & Audio)',
-      description: 'AnyDownloader gives you the highest possible original resolution, including 1080p, 720p HD, and extracted MP3 audio without quality loss.',
+      description: 'KHS DOWNLOAD gives you the highest possible original resolution, including 1080p, 720p HD, and extracted MP3 audio without quality loss.',
       icon: Award,
       color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950/50 border-cyan-200 dark:border-cyan-800'
     }
@@ -63,7 +63,7 @@ export const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isDark }) => {
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 mb-3">
             <Video className="w-3.5 h-3.5" />
-            <span>Why Choose AnyDownloader</span>
+            <span>Why Choose KHS DOWNLOAD</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-display text-slate-900 dark:text-white">
             Online Kuaishou Video Downloader

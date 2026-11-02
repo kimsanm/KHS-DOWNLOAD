@@ -18,7 +18,7 @@ export const HowToSection: React.FC<HowToSectionProps> = ({ onScrollToTop, isDar
     {
       step: '02',
       title: 'Paste your Kuaishou URL',
-      description: 'Go to AnyDownloader Kuaishou Downloader, paste the copied link into the input box above, and press the Download button.',
+      description: 'Go to KHS DOWNLOAD Kuaishou Downloader, paste the copied link into the input box above, and press the Download button.',
       icon: Link2,
       tip: 'Automatic watermark removal parsing'
     },

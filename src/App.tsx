@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { HeroDownloader } from './components/HeroDownloader';
 import { ResultCard } from './components/ResultCard';
+import { BatchQueuePanel } from './components/BatchQueuePanel';
 import { FeaturesSection } from './components/FeaturesSection';
 import { HowToSection } from './components/HowToSection';
 import { SeoGuideSection } from './components/SeoGuideSection';
@@ -15,13 +16,22 @@ import { Footer } from './components/Footer';
 import { VideoPlayerModal } from './components/VideoPlayerModal';
 import { QrCodeModal } from './components/QrCodeModal';
 import { SupportedSitesModal } from './components/SupportedSitesModal';
-import { LanguageCode, KuaishouVideoInfo } from './types';
+import { LanguageCode, KuaishouVideoInfo, MediaItem } from './types';
 import { 
   isValidUrl, 
   isKuaishouUrl, 
   extractKuaishouToken, 
   buildVideoResult 
 } from './utils/kuaishouParser';
+import {
+  BatchQueueItem,
+  addToBatch,
+  removeFromBatch,
+  clearBatch,
+  isItemInBatch,
+  canDownloadAll
+} from './utils/batchQueue';
+import { Layers, Download, Loader2 } from 'lucide-react';
 
 export default function App() {
   const [url, setUrl] = useState<string>('');
@@ -31,6 +41,15 @@ export default function App() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
   const [activeTab, setActiveTab] = useState<string>('kuaishou');
   const [isDark, setIsDark] = useState<boolean>(false);
+
+  // Batch download queue state
+  const [batchQueue, setBatchQueue] = useState<BatchQueueItem[]>([]);
+  const [isDownloadingAll, setIsDownloadingAll] = useState<boolean>(false);
+  const [downloadProgress, setDownloadProgress] = useState<{
+    current: number;
+    total: number;
+    currentTitle: string;
+  } | null>(null);
 
   // Modals state
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
@@ -155,7 +174,6 @@ export default function App() {
       return;
     }
     
-    // Update hash to reflect user action matching anydownloader behavior
     try {
       window.location.hash = `url=${encodeURIComponent(target.trim())}`;
     } catch {
@@ -169,13 +187,11 @@ export default function App() {
     setVideoData(null);
     setUrl('');
     setErrorMessage(null);
-    // Remove hash
     if (window.history.pushState) {
       window.history.pushState('', document.title, window.location.pathname + window.location.search);
     } else {
       window.location.hash = '';
     }
-    // Scroll back to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -186,6 +202,118 @@ export default function App() {
       inputEl.focus();
     }
   };
+
+  const handleScrollToBatch = () => {
+    const batchEl = document.getElementById('batch-queue-section');
+    if (batchEl) {
+      batchEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Batch queue handlers
+  const handleAddToBatch = (media?: MediaItem) => {
+    if (!videoData) return;
+
+    const chosenMedia = media || videoData.medias.find(m => m.type === 'video') || videoData.medias[0];
+    const itemId = `${videoData.id}-${chosenMedia.id}`;
+
+    const itemPayload = {
+      id: itemId,
+      videoId: videoData.id,
+      title: videoData.title,
+      thumbnail: videoData.thumbnail,
+      format: chosenMedia.quality,
+      extension: chosenMedia.extension,
+      size: chosenMedia.size,
+      sizeBytes: chosenMedia.sizeBytes,
+      downloadUrl: chosenMedia.url
+    };
+
+    const { queue: newQueue } = addToBatch(batchQueue, itemPayload);
+    setBatchQueue(newQueue);
+  };
+
+  const handleRemoveFromBatch = (id: string) => {
+    setBatchQueue(prev => removeFromBatch(prev, id));
+  };
+
+  const handleClearBatch = () => {
+    setBatchQueue(clearBatch());
+  };
+
+  // Helper to trigger single file download
+  const triggerDownloadFile = async (url: string, filename: string) => {
+    try {
+      const endpoint = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+      const response = await fetch(endpoint);
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+        return;
+      }
+    } catch (err) {
+      console.error('Download error:', err);
+    }
+  };
+
+  const handleDownloadSingle = async (item: BatchQueueItem) => {
+    // Mark item as downloading
+    setBatchQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'downloading' } : q));
+    const filename = `kuaishou_${item.videoId}_${item.format.replace(/[^a-zA-Z0-9]/g, '_')}.${item.extension}`;
+    await triggerDownloadFile(item.downloadUrl, filename);
+    setBatchQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'completed' } : q));
+  };
+
+  // 'Download All' batch handler: sequentially downloads all queued files
+  const handleDownloadAll = async () => {
+    if (batchQueue.length === 0 || isDownloadingAll) return;
+    setIsDownloadingAll(true);
+
+    const total = batchQueue.length;
+
+    for (let i = 0; i < total; i++) {
+      const item = batchQueue[i];
+      setDownloadProgress({
+        current: i + 1,
+        total,
+        currentTitle: item.title
+      });
+
+      // Update queue item status to downloading
+      setBatchQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'downloading' } : q));
+
+      const filename = `kuaishou_${item.videoId}_${item.format.replace(/[^a-zA-Z0-9]/g, '_')}.${item.extension}`;
+      await triggerDownloadFile(item.downloadUrl, filename);
+
+      // Update queue item status to completed
+      setBatchQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'completed' } : q));
+
+      // Friendly interval between downloads to respect browser download managers
+      if (i < total - 1) {
+        await new Promise(res => setTimeout(res, 800));
+      }
+    }
+
+    setDownloadProgress(null);
+    setIsDownloadingAll(false);
+  };
+
+  const isMediaInBatchCheck = (mediaId?: string) => {
+    if (!videoData) return false;
+    if (mediaId) {
+      return batchQueue.some(item => item.id === `${videoData.id}-${mediaId}`);
+    }
+    return batchQueue.some(item => item.videoId === videoData.id);
+  };
+
+  const hasMultipleInBatch = canDownloadAll(batchQueue);
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
@@ -224,7 +352,7 @@ export default function App() {
           isDark={isDark}
         />
 
-        {/* Video Download Result Card (shown when parsed) */}
+        {/* Video Download Result Card (with 'Add to Batch' & 'Download All') */}
         {videoData && (
           <ResultCard
             data={videoData}
@@ -232,7 +360,28 @@ export default function App() {
             onOpenQrCode={() => setQrCodeOpen(true)}
             onReset={handleReset}
             isDark={isDark}
+            onAddToBatch={handleAddToBatch}
+            isMediaInBatch={isMediaInBatchCheck}
+            batchCount={batchQueue.length}
+            onDownloadAll={hasMultipleInBatch ? handleDownloadAll : undefined}
+            onScrollToBatch={handleScrollToBatch}
           />
+        )}
+
+        {/* Batch Queue Management Panel (Visible when items are in queue) */}
+        {batchQueue.length > 0 && (
+          <div className="px-4 sm:px-6">
+            <BatchQueuePanel
+              queue={batchQueue}
+              onRemoveItem={handleRemoveFromBatch}
+              onClearQueue={handleClearBatch}
+              onDownloadAll={handleDownloadAll}
+              onDownloadSingle={handleDownloadSingle}
+              isDownloadingAll={isDownloadingAll}
+              downloadProgress={downloadProgress}
+              isDark={isDark}
+            />
+          </div>
         )}
 
         {/* 6 Key Features Section */}
@@ -260,6 +409,42 @@ export default function App() {
         currentLang={currentLang}
         onLanguageChange={setCurrentLang}
       />
+
+      {/* Floating Bottom Batch Bar (when user scrolls and queue has items) */}
+      {batchQueue.length > 0 && (
+        <div className="fixed bottom-5 right-5 sm:right-8 z-30 flex items-center gap-2 p-2 rounded-2xl bg-slate-900/90 dark:bg-slate-800/90 text-white backdrop-blur-md shadow-2xl border border-slate-700/80 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <button
+            onClick={handleScrollToBatch}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+          >
+            <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center font-bold text-[10px]">
+              {batchQueue.length}
+            </div>
+            <span>Batch Queue</span>
+          </button>
+
+          {/* 'Download All' button on floating bar when more than 1 in queue */}
+          {hasMultipleInBatch && (
+            <button
+              onClick={handleDownloadAll}
+              disabled={isDownloadingAll}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md active:scale-95 transition-all"
+            >
+              {isDownloadingAll ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Download All ({batchQueue.length})</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Modals */}
       {videoData && (

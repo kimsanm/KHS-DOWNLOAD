@@ -78,7 +78,7 @@ export const SupportedSitesModal: React.FC<SupportedSitesModalProps> = ({
               Supported Platforms & Websites
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              AnyDownloader supports downloading from 30+ popular online media services
+              KHS DOWNLOAD supports downloading from 30+ popular online media services
             </p>
           </div>
           <button
@@ -151,7 +151,7 @@ export const SupportedSitesModal: React.FC<SupportedSitesModalProps> = ({
 
           {filtered.length === 0 && (
             <div className="text-center py-10 text-xs text-slate-400">
-              No matching sites found for "{search}". AnyDownloader continually adds new platforms!
+              No matching sites found for "{search}". KHS DOWNLOAD continually adds new platforms!
             </div>
           )}
         </div>

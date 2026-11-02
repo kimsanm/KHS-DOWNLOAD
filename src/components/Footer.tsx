@@ -36,12 +36,12 @@ export const Footer: React.FC<FooterProps> = ({
                 <Download className="w-4 h-4 text-white stroke-[2.5]" />
               </div>
               <span className="text-xl font-black tracking-tight text-white font-display">
-                Any<span className="text-blue-400">Downloader</span>
+                KHS <span className="text-blue-400">DOWNLOAD</span>
               </span>
             </div>
 
             <p className="text-xs sm:text-sm text-slate-400 max-w-sm leading-relaxed mb-4">
-              AnyDownloader is the leading free online video downloader supporting Kuaishou, TikTok, Instagram, Facebook, and 30+ other platforms without watermarks in pristine HD quality.
+              KHS DOWNLOAD is the leading free online video downloader supporting Kuaishou, Kwai, TikTok, Instagram, Facebook, and 30+ other platforms without watermarks in pristine HD quality.
             </p>
 
             <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-800/60 gap-3">
           <div>
-            &copy; 2021-2026 AnyDownloader.com. All Rights Reserved.
+            &copy; 2021-2026 KHS DOWNLOAD. All Rights Reserved.
           </div>
           <div className="flex items-center gap-1">
             <span>Built for fast, watermark-free media preservation.</span>

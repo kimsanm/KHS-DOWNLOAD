@@ -10,20 +10,20 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ isDark }) => {
 
   const faqs = [
     {
-      q: 'What is Kuaishou Downloader?',
-      a: 'AnyDownloader Kuaishou Downloader is a free web-based utility that lets you save videos, short clips, and music from Kuaishou (快手) or Kwai directly to your computer or mobile device in high-definition MP4 format without watermarks.'
+      q: 'What is KHS DOWNLOAD?',
+      a: 'KHS DOWNLOAD is a free web-based utility that lets you save videos, short clips, and music from Kuaishou (快手) or Kwai directly to your computer or mobile device in high-definition MP4 format without watermarks.'
     },
     {
       q: 'How can I download Kuaishou videos without watermarks?',
-      a: 'Simply copy the video link from the Kuaishou app or browser (e.g., https://v.kuaishou.com/KwNH1t3F), paste it into our search bar, and click Download. AnyDownloader automatically accesses the original watermark-free stream provided by the content distribution network.'
+      a: 'Simply copy the video link from the Kuaishou app or browser (e.g., https://v.kuaishou.com/KwNH1t3F), paste it into our search bar, and click Download. KHS DOWNLOAD automatically accesses the original watermark-free stream provided by the content distribution network.'
     },
     {
-      q: 'Is AnyDownloader completely free?',
+      q: 'Is KHS DOWNLOAD completely free?',
       a: 'Yes, 100% free! There are no hidden fees, paid tiers, or daily download limits. You can download as many videos as you want without registering or logging in.'
     },
     {
       q: 'Does it work on iPhone, iPad, and Android?',
-      a: 'Yes! On iOS, open Safari, paste the link into AnyDownloader, and tap Download. Safari will save the video straight to your Downloads manager or Photos app. On Android, Chrome and other mobile browsers work identically.'
+      a: 'Yes! On iOS, open Safari, paste the link into KHS DOWNLOAD, and tap Download. Safari will save the video straight to your Downloads manager or Photos app. On Android, Chrome and other mobile browsers work identically.'
     },
     {
       q: 'Where do downloaded videos get saved?',
@@ -31,11 +31,11 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ isDark }) => {
     },
     {
       q: 'Can I extract and download MP3 audio from Kuaishou clips?',
-      a: 'Yes! Along with 720p HD and 480p SD video streams, AnyDownloader provides an audio extraction option that lets you save high-quality MP3 tracks from any Kuaishou clip.'
+      a: 'Yes! Along with 720p HD and 480p SD video streams, KHS DOWNLOAD provides an audio extraction option that lets you save high-quality MP3 tracks from any Kuaishou clip.'
     },
     {
       q: 'Do you track my downloads or store copies of videos?',
-      a: 'No. AnyDownloader does not store downloaded videos on our servers and does not keep logs or tracking history of what you download. All content is fetched directly between your device and the CDN.'
+      a: 'No. KHS DOWNLOAD does not store downloaded videos on our servers and does not keep logs or tracking history of what you download. All content is fetched directly between your device and the CDN.'
     }
   ];
 

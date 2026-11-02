@@ -12,7 +12,10 @@ import {
   ExternalLink,
   Sparkles,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  Layers,
+  Plus,
+  CheckCircle2
 } from 'lucide-react';
 import { KuaishouVideoInfo, MediaItem } from '../types';
 
@@ -22,6 +25,11 @@ interface ResultCardProps {
   onOpenQrCode: () => void;
   onReset: () => void;
   isDark: boolean;
+  onAddToBatch: (media?: MediaItem) => void;
+  isMediaInBatch: (mediaId?: string) => boolean;
+  batchCount: number;
+  onDownloadAll?: () => void;
+  onScrollToBatch?: () => void;
 }
 
 export const ResultCard: React.FC<ResultCardProps> = ({
@@ -29,43 +37,39 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   onOpenPreview,
   onOpenQrCode,
   onReset,
-  isDark
+  isDark,
+  onAddToBatch,
+  isMediaInBatch,
+  batchCount,
+  onDownloadAll,
+  onScrollToBatch
 }) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadedIds, setDownloadedIds] = useState<Record<string, boolean>>({});
+  const [addedAnimation, setAddedAnimation] = useState<boolean>(false);
+
+  // Default primary video media (720p HD or first video)
+  const primaryMedia = data.medias.find(m => m.type === 'video') || data.medias[0];
+  const isPrimaryInBatch = isMediaInBatch(primaryMedia?.id);
 
   const handleDownload = async (media: MediaItem) => {
     setDownloadingId(media.id);
     
     try {
-      // Create a blob-based download or trigger browser download
       const filename = `kuaishou_${data.id}_${media.quality.replace(/[^a-zA-Z0-9]/g, '_')}.${media.extension}`;
       
-      // Try fetching blob if CORS permits, otherwise fallback to direct anchor click
-      try {
-        const response = await fetch(media.url, { mode: 'cors' });
-        if (response.ok) {
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
-        } else {
-          throw new Error('Direct fetch failed');
-        }
-      } catch (err) {
-        // Fallback anchor with target=_blank or /api/download
+      const endpoint = `/api/download?url=${encodeURIComponent(media.url)}&filename=${encodeURIComponent(filename)}`;
+      const response = await fetch(endpoint);
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = `/api/download?url=${encodeURIComponent(media.url)}&filename=${encodeURIComponent(filename)}`;
+        a.href = blobUrl;
         a.download = filename;
-        a.target = '_blank';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
       }
 
       setDownloadedIds(prev => ({ ...prev, [media.id]: true }));
@@ -93,9 +97,15 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     handleDownload(thumbMedia);
   };
 
+  const handleAddPrimaryToBatch = () => {
+    onAddToBatch(primaryMedia);
+    setAddedAnimation(true);
+    setTimeout(() => setAddedAnimation(false), 1500);
+  };
+
   // Social share links
   const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://anydownloader.com';
-  const shareText = encodeURIComponent(`Download ${data.title} without watermark on AnyDownloader`);
+  const shareText = encodeURIComponent(`Download ${data.title} without watermark on KHS DOWNLOAD`);
   
   const shareLinks = [
     {
@@ -136,8 +146,8 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     }`}>
       <div className="max-w-5xl mx-auto">
         
-        {/* Top Header Card notification */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 p-3 sm:p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80">
+        {/* Top Header Card notification with Download All button if multiple in batch */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 p-3 sm:p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 shadow-xs">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -152,13 +162,39 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onReset}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Download Another</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Show 'Download All' button when more than one link is in the queue */}
+            {batchCount > 1 && onDownloadAll && (
+              <button
+                onClick={onDownloadAll}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm active:scale-95 transition-all"
+                aria-label={`Download all ${batchCount} queued videos`}
+              >
+                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Download All ({batchCount})</span>
+              </button>
+            )}
+
+            {/* Batch Queue Pill Counter */}
+            {batchCount > 0 && onScrollToBatch && (
+              <button
+                onClick={onScrollToBatch}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100/80 dark:bg-blue-900/40 hover:bg-blue-200/80 transition-colors"
+                title="View batch queue"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Queue: {batchCount}</span>
+              </button>
+            )}
+
+            <button
+              onClick={onReset}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Download Another</span>
+            </button>
+          </div>
         </div>
 
         {/* Main Grid: Left Thumbnail & Actions, Right Formats Table */}
@@ -194,22 +230,54 @@ export const ResultCard: React.FC<ResultCardProps> = ({
               </button>
             </div>
 
-            {/* Quick Action Buttons Below Thumbnail */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 w-full max-w-sm">
-              <button
-                onClick={handleDownloadThumbnail}
-                className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>Download Thumbnail</span>
-              </button>
+            {/* Quick Action Buttons Below Thumbnail (including 'Add to Batch') */}
+            <div className="mt-4 flex flex-col gap-2 w-full max-w-sm">
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={handleDownloadThumbnail}
+                  className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Thumbnail</span>
+                </button>
 
+                <button
+                  onClick={onOpenPreview}
+                  className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  <span>Preview</span>
+                </button>
+              </div>
+
+              {/* 'Add to Batch' Button */}
               <button
-                onClick={onOpenPreview}
-                className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                onClick={handleAddPrimaryToBatch}
+                className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 ${
+                  isPrimaryInBatch
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                    : addedAnimation
+                    ? 'bg-emerald-500 text-white scale-102'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
+                }`}
+                aria-label={isPrimaryInBatch ? "Video already added to batch" : "Add this video to download batch"}
               >
-                <Play className="w-3.5 h-3.5" />
-                <span>Watch Preview</span>
+                {isPrimaryInBatch ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                    <span>In Batch Queue ({batchCount})</span>
+                  </>
+                ) : addedAnimation ? (
+                  <>
+                    <Check className="w-4 h-4 stroke-[2.5]" />
+                    <span>Added to Batch!</span>
+                  </>
+                ) : (
+                  <>
+                    <Layers className="w-4 h-4" />
+                    <span>Add to Batch</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -255,6 +323,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
                   {data.medias.map((media) => {
                     const isDownloading = downloadingId === media.id;
                     const isDownloaded = downloadedIds[media.id];
+                    const inBatch = isMediaInBatch(media.id);
 
                     let badgeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300';
                     let btnColor = 'bg-blue-600 hover:bg-blue-700 text-white';
@@ -307,16 +376,33 @@ export const ResultCard: React.FC<ResultCardProps> = ({
                         </td>
 
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => handleDownload(media)}
-                            disabled={isDownloading}
-                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95 ${btnColor}`}
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>
-                              {isDownloading ? 'Saving...' : isDownloaded ? 'Downloaded' : 'Download'}
-                            </span>
-                          </button>
+                          <div className="inline-flex items-center gap-1.5">
+                            {/* '+ Batch' button for format row */}
+                            <button
+                              onClick={() => onAddToBatch(media)}
+                              className={`p-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                                inBatch
+                                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300'
+                                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600'
+                              }`}
+                              title={inBatch ? "Already in batch" : "Add this format to batch"}
+                              aria-label={`Add ${media.quality} to batch`}
+                            >
+                              <Layers className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Direct Download button */}
+                            <button
+                              onClick={() => handleDownload(media)}
+                              disabled={isDownloading}
+                              className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm transition-all active:scale-95 ${btnColor}`}
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>
+                                {isDownloading ? 'Saving...' : isDownloaded ? 'Downloaded' : 'Download'}
+                              </span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
