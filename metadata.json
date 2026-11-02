@@ -1,0 +1,8 @@
+{
+  "name": "AnyDownloader - Kuaishou Video Downloader",
+  "description": "Download Kuaishou videos without watermarks in HD MP4 quality. Fast, free, online Kuaishou video and audio downloader.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
